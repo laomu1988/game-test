@@ -16,28 +16,47 @@ function emitOther(socket, msg, data) {
     }
 };
 
+function Translate(item) {
+    if (!item || !item.data) {
+        return null;
+    }
+    var data = item.data;
+    if (data && data.time && (data.vx || data.vy)) {
+        var time = Date.now() - data.time;
+        if (time) {
+            data.time = Date.now();
+            data.x += data.vx * time / 1000;
+            data.y += data.vy * time / 1000;
+        }
+    }
+    return data;
+}
+
 io.on('connection', function (socket) {
-    socket.on('ready', function () {
-        var newId = 'user-' + Date.now();
-        socket.userId = newId;
-        socket.data = {userId: newId, x: Math.random() * 300, y: Math.random() * 300, vx: 0, vy: 0, time: Date.now()};
-        console.log('new-user', socket.data);
+    socket.on('init', function () {
+        var newId;
+        if (socket.userId) {
+            newId = socket.userId;
+            Translate(socket);
+            console.log('reinit', newId, 'user-len:', sockets.length);
+        } else {
+            newId = 'user-' + Date.now();
+            socket.userId = newId;
+            socket.data = {
+                userId: newId,
+                x: Math.random() * 300,
+                y: Math.random() * 300,
+                vx: 0,
+                vy: 0,
+                time: Date.now()
+            };
+            console.log('new-user', newId, 'user-len:', sockets.length + 1);
+            sockets.push(socket);
+        }
         socket.emit('init', {
             data: socket.data,
-            users: sockets.map(function (item) {
-                var data = item.data;
-                if (data && data.time && (data.vx || data.vy)) {
-                    var time = Date.now() - data;
-                    if (time) {
-                        data.time = Date.now();
-                        data.x += data.vx * time / 1000 / 60;
-                        data.y += data.vy * time / 1000 / 60;
-                    }
-                }
-                return data;
-            })
+            users: sockets.map(Translate)
         });
-        sockets.push(socket);
         emitOther(socket, 'user-new', socket.data);
     });
     socket.on('move', function (data) {

@@ -26,7 +26,7 @@ game_state.main.prototype = {
         me.body.velocity.x = vx;
         me.body.velocity.y = vy;
         console.log(this.me.y);
-        send('move', {x: me.x, y: me.y, vx: vx, vy: vy})
+        msg.send('move', {x: me.x, y: me.y, vx: vx, vy: vy})
     },
     updateUser: function (data, sprite) {
         if (data.userId) {
@@ -69,11 +69,13 @@ game_state.main.prototype = {
             this.me = me;
             this.game.input.keyboard.addKey(Phaser.Keyboard.UP).onDown.add(this.move.bind(this, 0, -60), this);
             this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN).onDown.add(this.move.bind(this, 0, 60), this);
+            this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT).onDown.add(this.move.bind(this, -30, 0), this);
+            this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT).onDown.add(this.move.bind(this, 30, 0), this);
         }
     },
     // Fuction called after 'preload' to setup the game 
     create: function () {
-
+        this.inited = true;
         // Display the bird on the screen
         // Call the 'jump' function when the spacekey is hit
         //this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT).onDown.add(this.move.bind(this, -30, 0), this);
@@ -82,6 +84,8 @@ game_state.main.prototype = {
         // Create a group of 20 pipes
         this.pipes = game.add.group();
         this.pipes.createMultiple(20, 'pipe');
+
+        msg.send('init');
 
         // Timer that calls 'add_row_of_pipes' ever 1.5 seconds
         // this.timer = this.game.time.events.loop(1500, this.add_row_of_pipes, this);
